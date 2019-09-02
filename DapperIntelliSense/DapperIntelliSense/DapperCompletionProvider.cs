@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Options;
+using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.SqlServer.Management.SqlParser.Parser;
 
@@ -37,11 +39,12 @@ namespace DapperIntelliSense
 
 						if (String.IsNullOrEmpty(text))
 						{
-							
+							context.AddItem(CompletionItem.Create("SELECT", tags: ImmutableArray.Create(WellKnownTags.Keyword)));
 						}
 						else
 						{
 							var parseResult = Parser.Parse(text);
+							
 						}
 
 					}
