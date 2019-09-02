@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.779
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DapperIntelliSense", "DapperIntelliSense\DapperIntelliSense\DapperIntelliSense.csproj", "{91755FEF-47D6-4C27-B767-5624D5ECFA56}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DapperIntelliSense", "DapperIntelliSense\DapperIntelliSense\DapperIntelliSense.csproj", "{91755FEF-47D6-4C27-B767-5624D5ECFA56}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DapperIntelliSense.Vsix", "DapperIntelliSense\DapperIntelliSense.Vsix\DapperIntelliSense.Vsix.csproj", "{416225EF-71AC-4E28-B0AA-92C3F1ECE05C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DapperIntelliSense.Tests", "DapperIntelliSense\DapperIntelliSense.Tests\DapperIntelliSense.Tests.csproj", "{725BED20-DCB5-4561-AA32-A16CEC6D6FD0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{416225EF-71AC-4E28-B0AA-92C3F1ECE05C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{416225EF-71AC-4E28-B0AA-92C3F1ECE05C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{416225EF-71AC-4E28-B0AA-92C3F1ECE05C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{725BED20-DCB5-4561-AA32-A16CEC6D6FD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{725BED20-DCB5-4561-AA32-A16CEC6D6FD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{725BED20-DCB5-4561-AA32-A16CEC6D6FD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{725BED20-DCB5-4561-AA32-A16CEC6D6FD0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
