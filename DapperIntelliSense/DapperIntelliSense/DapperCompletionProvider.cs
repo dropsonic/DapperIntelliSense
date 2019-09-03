@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
@@ -8,6 +11,7 @@ using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.SqlServer.Management.SqlParser.Parser;
+using Microsoft.SqlServer.Management.SqlParser.SqlCodeDom;
 
 namespace DapperIntelliSense
 {
@@ -22,54 +26,63 @@ namespace DapperIntelliSense
 			var semanticModel = await context.Document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
 
 			// Check that we're inside a string literal which is a method argument
-			if (node is ArgumentSyntax argNode && argNode.Expression is LiteralExpressionSyntax literalNode
-			    && argNode.Parent.Parent is InvocationExpressionSyntax invNode)
+			if (!(node is ArgumentSyntax argNode) || !(argNode.Expression is LiteralExpressionSyntax literalNode) ||
+			    !(argNode.Parent.Parent is InvocationExpressionSyntax invNode))
+				return;
+
+			// Check that is is a method call
+			if (!(semanticModel.GetSymbolInfo(invNode, cancellationToken).Symbol is IMethodSymbol methodSymbol))
+				return;
+
+			// Check that it is a Dapper extension method call
+			var sqlMapperSymbol = semanticModel.Compilation.GetTypeByMetadataName("Dapper.SqlMapper");
+			if (sqlMapperSymbol == null || !methodSymbol.ContainingType.Equals(sqlMapperSymbol) ||
+			    methodSymbol.Name != "Query" || !methodSymbol.IsGenericMethod)
+				return;
+
+			// We don't want to show any other IntelliSense items except ours
+			context.IsExclusive = true;
+			// Get the string literal's value, considering the current position
+			string text = literalNode.Token.ValueText;
+			text = text.Substring(0, context.Position - literalNode.Token.SpanStart - 1);
+
+			if (String.IsNullOrEmpty(text))
 			{
-				// Check that is is a Dapper call
-				if (semanticModel.GetSymbolInfo(invNode, cancellationToken).Symbol is IMethodSymbol methodSymbol)
+				context.AddItem(CompletionItem.Create("SELECT",
+					tags: ImmutableArray.Create(WellKnownTags.Keyword)));
+			}
+			else
+			{
+				var parseResult = Parser.Parse(text);
+
+				if (parseResult.Script.Batches.Count == 0 || parseResult.Script.Batches[0].Statements.Count == 0)
+					return;
+				
+				var statement = parseResult.Script.Batches[0].Statements[0];
+				if (!(statement is SqlSelectStatement selectStatement))
+					return;
+				
+				if (!(selectStatement.SelectSpecification?.QueryExpression is SqlQuerySpecification query))
+					return;
+
+				if (query.SelectClause.SelectExpressions.All(e => String.IsNullOrWhiteSpace(e.Sql)))
 				{
-					var sqlMapperSymbol = semanticModel.Compilation.GetTypeByMetadataName("Dapper.SqlMapper");
-					if (sqlMapperSymbol != null && methodSymbol.ContainingType.Equals(sqlMapperSymbol)
-					                            && methodSymbol.Name == "Query")
+					context.AddItem(CompletionItem.Create("TOP", tags: ImmutableArray.Create(WellKnownTags.Keyword)));
+					context.AddItem(CompletionItem.Create("*", tags: ImmutableArray.Create(WellKnownTags.Keyword)));
+
+					bool singleTable = methodSymbol.TypeArguments.Length == 1;
+
+					foreach (var typePar in methodSymbol.TypeArguments)
 					{
-						// We don't want to show any other IntelliSense items except ours
-						context.IsExclusive = true;
-						// Get the string literal's value
-						string text = literalNode.Token.ValueText;
-
-						if (String.IsNullOrEmpty(text))
+						foreach (var property in typePar.GetMembers()
+							.OfType<IPropertySymbol>()
+							.Where(p => p.DeclaredAccessibility.HasFlag(Accessibility.Public) && p.GetMethod != null))
 						{
-							context.AddItem(CompletionItem.Create("SELECT", tags: ImmutableArray.Create(WellKnownTags.Keyword)));
+							string propText = singleTable ? property.Name : $"{typePar.Name}.{property.Name}";
+							context.AddItem(CompletionItem.Create(propText, tags: ImmutableArray.Create(WellKnownTags.Property)));
 						}
-						else
-						{
-							var parseResult = Parser.Parse(text);
-							
-						}
-
 					}
 				}
-
-
-				//if (String.IsNullOrEmpty(literal.Token.ValueText))
-				//	context.AddItem(CompletionItem.Create("SELECT"));
-				//else if (literal.Token.ValueText.StartsWith("SELECT * FROM", StringComparison.OrdinalIgnoreCase))
-				//{
-					
-
-				//	var dacs = semanticModel.LookupSymbols(context.Position).OfType<INamedTypeSymbol>()
-				//		.Where(s => s.AllInterfaces.Any(i => i.Name == "IBqlTable"));
-
-				//	var tags = ImmutableArray.Create(WellKnownTags.Class, WellKnownTags.Public);
-				//	foreach (var dacSymbol in dacs)
-				//	{
-				//		context.AddItem(CompletionItem.Create(dacSymbol.Name, tags: tags));
-				//	}
-				//}
-				//else if (literal.Token.ValueText.StartsWith("SELECT *", StringComparison.OrdinalIgnoreCase))
-				//	context.AddItem(CompletionItem.Create("FROM"));
-				//else if (literal.Token.ValueText.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
-				//	context.AddItem(CompletionItem.Create("*"));
 			}
 		}
 		

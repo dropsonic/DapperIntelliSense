@@ -30,7 +30,7 @@ namespace DapperIntelliSense.Tests.Tests
 
 					if (position < 0)
 					{
-						position = docText.IndexOf(QueryTextPlaceholder, StringComparison.Ordinal) + _text.Length + 1;
+						position = docText.IndexOf(QueryTextPlaceholder, StringComparison.Ordinal) + _text.Length;
 						if (position > 0)
 						{
 							docText = docText.Replace(QueryTextPlaceholder, _text);

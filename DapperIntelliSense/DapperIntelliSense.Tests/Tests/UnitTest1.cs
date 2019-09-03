@@ -32,5 +32,17 @@ namespace DapperIntelliSense.Tests.Tests
 		    actual.Should().NotBeNull();
 		    actual.Items.Should().HaveCount(1);
 	    }
+
+	    [Theory]
+	    [IntelliSenseText("SELECT ")]
+	    public async Task AfterSelect_ShouldShowSelectionSuggestion(int position, params string[] sourceFiles)
+	    {
+		    var document = CreateCSharpDocument(sourceFiles);
+		    var service = CompletionService.GetService(document);
+		    var actual = await service.GetCompletionsAsync(document, position);
+
+		    actual.Should().NotBeNull();
+		    actual.Items.Should().HaveCount(1);
+	    }
     }
 }
